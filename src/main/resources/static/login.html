@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录页面</title>
+</head>
+<body>
+<div id="whole">
+    <div><input id="userName" placeholder="账号" value=""/></div>
+    <div><input id="clazzId" placeholder="班级" value=""/></div>
+    <button id="login">登录</button>
+</div>
+
+<script src="/js/jquery.min.js"></script>
+</body>
+</html>
+<script type="application/javascript">
+    $(function () {
+        $("#login").click(function () {
+            $.ajax({
+                url: '/send/user/login',
+                type: 'post',
+                data: {
+                    'userName': $("#userName").val(),
+                    'clazzId':$("#clazzId").val()
+                }, success: function (res) {
+                    console.log(res.data);
+                    if (res.data != null) {
+                        localStorage.setItem("userInfo", JSON.stringify(res.data));
+                        location.href = "index.html";
+                    }
+                }, error: function (res) {
+                    console.log(res);
+                }
+            })
+        });
+    })
+</script>

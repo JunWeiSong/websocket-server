@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+    <style>
+        .title {
+            color: blueviolet;
+            font-size: 13px;
+        }
+
+        .me {
+            text-indent: 20px;
+            letter-spacing: 1px;
+            font-size: 14px;
+            font-family: "微软雅黑", serif;
+        }
+        .message{
+            width: 400px;
+        }
+    </style>
+</head>
+<body>
+<h3></h3>
+<div style="width: 400px;height: 150px">
+    <textarea class="text" cols="53" rows="6" placeholder="那就说些什么吧！！！"></textarea>
+    <div class="send">
+        <button style="float: right">发送</button>
+    </div>
+</div>
+<div class="message">
+
+</div>
+<script src="js/jquery.min.js"></script>
+<script src="js/sockjs.min.js"></script>
+</body>
+</html>
+<script>
+    let userInfo = localStorage.getItem("userInfo");
+    let user = JSON.parse(userInfo);
+    $(function () {
+        if(userInfo==null){
+            location.href="login.html";
+        }
+        $("h3").html(user.name);
+        $(".send").click(function () {
+            let msg  = JSON.stringify($(".text").val());
+            webSocket.send(sendData(msg));
+        })
+    });
+
+    let baseUrl = "ws://localhost:8001/ws/" +user.id;
+    let webSocket;
+    if ("WebSocket" in window) {
+        webSocket = new WebSocket(baseUrl);
+    } else if ("MozWebSocket" in window) {
+        webSocket = new WebSocket(baseUrl);
+    } else {
+        webSocket = new SockJs(baseUrl);
+    }
+
+    //打开链接
+    webSocket.onopen = function (e) {
+        webSocket.send(sendData(null));
+        console.log("websocket is open");
+    };
+    //从服务端接收消息
+    webSocket.onmessage = function (e) {
+        console.log(e.data);
+        let data = JSON.parse(e.data);
+        if(data.fromId==null){
+            $(".message").append(`<div>${data.message}</div>`)
+        }else {
+            if(data.fromId===user.id){
+                data.fromName="我";
+                $(".message").append(`    <div class="ap">
+                                        <label class="title"  style="float: right">${user.onLine===1?"在线":"离线"},${data.fromName}:${date()}</label>
+                                        <div class="me"  style="float: right">${data.message}</div>
+                                    </div>`);
+            }else {
+                $(".message").append(`    <div class="ap">
+                                        <label class="title">${user.onLine===1?"在线":"离线"},${data.fromName}:${date()}</label>
+                                        <div class="me">${data.message}</div>
+                                    </div>`);
+            }
+        }
+
+    };
+    //关闭连接
+    webSocket.onclose = function (e) {
+
+        console.log('webSocket is close')
+    };
+
+
+    function date() {
+        return new Date().toLocaleTimeString();
+    }
+
+    function sendData(msg) {
+        let data = {
+            'fromId':user.id,
+            'fromName':user.name,
+            'clazzId':user.clazzId,
+            'onLine':user.onLine,
+            'message':msg
+        };
+        return JSON.stringify(data);
+    }
+</script>
