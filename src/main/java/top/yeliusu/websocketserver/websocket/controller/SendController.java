@@ -10,6 +10,7 @@ import top.yeliusu.websocketserver.websocket.utils.WebSocketResult;
 import java.util.Random;
 import java.util.UUID;
 
+
 @RestController
 @RequestMapping("/send/user")
 public class SendController {
@@ -28,12 +29,14 @@ public class SendController {
         return WebSocketResult.ok(userInfo);
     }
 
+
+
     /**
      * 随机性别
      *
      * @return 男女
      */
-    private String randSex() {
+    public static String randSex() {
         return new Random().nextInt(10) < 5 ? "男" : "女";
     }
 }

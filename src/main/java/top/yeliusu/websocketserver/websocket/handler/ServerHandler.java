@@ -10,10 +10,14 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import top.yeliusu.websocketserver.websocket.domain.UserInfo;
 import top.yeliusu.websocketserver.websocket.domain.vo.SendMsgVO;
+import top.yeliusu.websocketserver.websocket.utils.ActiveMqUtils;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static top.yeliusu.websocketserver.websocket.utils.ActiveMqUtils.getMessage;
 
 
 /**
@@ -53,17 +57,19 @@ public class ServerHandler extends SimpleChannelInboundHandler<TextWebSocketFram
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
             String uri = request.uri();
-            String userId = uri.substring(uri.lastIndexOf("/") + 1);
-            UserInfo user = TokenHandler.get(userId);
+            String urlParams = uri.substring(uri.lastIndexOf("/ws/") + 4);
+            String[] split = urlParams.split("/");
+            UserInfo user = TokenHandler.get(split[0]);
             if (ObjectUtils.isEmpty(user)){
                 return;
             }
             //将握手信息进行缓存，方便下次取用
-            TokenHandler.channelCache.put(userId, ctx.channel());
-            String msg1 = "欢迎" + user.getName() + "加入我们的大家庭！！！";
-            MsgDistribution.msgJudge(new SendMsgVO(msg1,user.getClazzId()));
+            //todo 以【用户id/班级id 】   存储用户与班级的通道信息
+            // todo 同理，【fromId/toId】 存储用户和toId的通道信息
+            TokenHandler.channelCache.put(urlParams, ctx.channel());
+//            getMessage(user.getId());
             //重新设置路径，因为传递了参数
-            request.setUri(uri.substring(0,uri.lastIndexOf("/") ));
+            request.setUri("/ws");
         } else if (msg instanceof TextWebSocketFrame) {
             //正常的TEXT消息类型
             TextWebSocketFrame frame = (TextWebSocketFrame) msg;
@@ -84,11 +90,14 @@ public class ServerHandler extends SimpleChannelInboundHandler<TextWebSocketFram
         MyChannelHandlerPool.channelGroup.writeAndFlush(new TextWebSocketFrame(message));
     }
 
-    public static void sendMessageOne(String message, String id) {
+    public static void sendMessageOne(String message, String userId,String toId) {
         //收到信息后，群发给所有channel
-        Channel channel = TokenHandler.channelCache.get(id);
+        Channel channel = TokenHandler.channelCache.get(userId+"/"+toId);
         if (channel!=null) {
             MyChannelHandlerPool.channelGroup.find(channel.id()).writeAndFlush(new TextWebSocketFrame(message));
+        }else {
+            System.out.println(userId+"此用户不在班级聊天界面");
+            ActiveMqUtils.sendMessage(userId,message);
         }
     }
 
