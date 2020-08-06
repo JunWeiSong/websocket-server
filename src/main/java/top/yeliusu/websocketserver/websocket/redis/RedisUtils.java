@@ -185,4 +185,59 @@ public class RedisUtils {
         return redisTemplate.opsForSet().randomMembers(key, len);
     }
 
+    //==============================List=====================================
+
+    /**
+     * 左插入
+     * @param key key
+     * @param value List对象，或者单个值
+     */
+    public static void lPush(String key,Object value) {
+       redisTemplate.opsForList().leftPush(key,value);
+    }
+
+    public static void lPushAll(String key,Object value) {
+        redisTemplate.opsForList().leftPushAll(key,value);
+    }
+
+    /**
+     * list获取指定长度列表
+     * @param key key
+     * @param start 下标，从0开始
+     * @param end 结束位置，-1表示全部
+     */
+    public static List<Object> lGet(String key,Integer start,Integer end) {
+        return redisTemplate.opsForList().range(key, start, end);
+    }
+
+    /**
+     * 删除列表中第一个遇到的value值
+     * @param key key
+     * @param count count指定删除多少个,count为0则全部删除
+     * @param value value值
+     */
+    public static void lRemove(String key,Integer count,Object value) {
+        redisTemplate.opsForList().remove(key,count,value);
+    }
+
+    /**
+     * 移除列表中的第一个值，并返回该值
+     * @param key key
+     * @return 被移除的元素
+     */
+    public static Object lPop(String key) {
+        return redisTemplate.opsForList().leftPop(key);
+    }
+
+    /**
+     * 修剪list列表
+     * @param key key
+     * @param start 下标，开始位置0
+     * @param end 下标，结束位置，-1表示结尾
+     */
+    public static void lTrim(String key,Integer start,Integer end) {
+        redisTemplate.opsForList().trim(key,start,end);
+    }
+
+
 }
